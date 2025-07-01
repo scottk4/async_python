@@ -4,40 +4,11 @@ import json
 import pandas as pd
 from typing import Any
 
-PAGES = 3
-POKEMON_PER_PAGE = 20
+from constants import POKEMON_PER_PAGE, PAGES
+from fetch import fetch_all_details, fetch_all_names
 
 def print_json(data):
     print(json.dumps(data, indent=2))
-
-async def fetch_poke_page(sess, offset):
-    async with sess.get(f'https://pokeapi.co/api/v2/pokemon?offset={offset}&limit={POKEMON_PER_PAGE}') as resp:
-        if resp.status != 200:
-            resp.raise_for_status()
-        return await resp.json()
-
-async def fetch_poke_details(sess, name):
-    async with sess.get(f'https://pokeapi.co/api/v2/pokemon/{name}') as resp:
-        if resp.status != 200:
-            resp.raise_for_status()
-        return await resp.json()
-
-
-async def fetch_all_names(sess, offsets):
-    tasks = [asyncio.create_task(fetch_poke_page(sess, offset)) for offset in offsets]
-
-    pages = await asyncio.gather(*tasks)
-    names = []
-    for page in pages:
-        names.extend([pokemon['name'] for pokemon in page['results']])
-    return names
-
-
-async def fetch_all_details(sess, names):
-    tasks = [asyncio.create_task(fetch_poke_details(sess, name)) for name in names]
-
-    details = await asyncio.gather(*tasks)
-    return details
 
 def get_poke_name_types(poke_types: list[dict[str, Any]]):
     return [poke_type['type']['name'] for poke_type in poke_types]
