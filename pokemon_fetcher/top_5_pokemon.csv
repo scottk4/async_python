@@ -1,0 +1,6 @@
+name,base_experience,types,weight
+charizard,240,"['fire', 'flying']",905
+blastoise,239,['water'],855
+venusaur,236,"['grass', 'poison']",1000
+nidoqueen,227,"['poison', 'ground']",600
+nidoking,227,"['poison', 'ground']",620
