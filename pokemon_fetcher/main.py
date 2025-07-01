@@ -33,8 +33,7 @@ async def main():
         details = await fetch_all_details(sess, names)
 
     df = make_dataframe(details)
-    df.head(5).to_csv("top_5_pokemon.csv", index=False)
-    
+    df.head(5).to_csv("top_5_pokemon_2.csv", index=False)
 
 
 if __name__ == "__main__":

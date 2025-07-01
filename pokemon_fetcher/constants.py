@@ -1,4 +1,3 @@
-
 PAGES = 3
 POKEMON_PER_PAGE = 20
 
