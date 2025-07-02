@@ -19,9 +19,8 @@ async def fetch_poke_page(semaphore, session, endpoint) -> None | dict[str, Any]
             async with session.get(endpoint) as resp:
                 if resp.status == 200:
                     result = await resp.json()
-                    # first_name = result['results'][0]['name']
-                    # print('first poke name of page: ', first_name)
                     return result
+
                 elif resp.status == 404:
                     print(f'Invalid endpoint: {endpoint}')
                 else:
@@ -47,9 +46,9 @@ async def fetch_all_pokemon_names(session):
     task_coroutines = [
         fetch_poke_page(semaphore, session, endpoint) for endpoint in endpoints
     ]
-    start_time = perf_counter()
+    # start_time = perf_counter()
     results = await asyncio.gather(*task_coroutines)
-    print(f'total time taken (s): {perf_counter() - start_time}')
+    # print(f'total time taken (s): {perf_counter() - start_time}')
 
     pokemon_names = []
     for page in results:
@@ -59,7 +58,8 @@ async def fetch_all_pokemon_names(session):
             page_names = parse_name_from_page(page)
             pokemon_names += page_names
     
-    print('num of pokes fetched: ', len(pokemon_names))
+    # print('num of pokes fetched: ', len(pokemon_names))
+    return pokemon_names
 
 async def main():
 
