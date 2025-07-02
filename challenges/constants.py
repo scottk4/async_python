@@ -1,3 +1,5 @@
+POKEMON_PER_PAGE = 100
+
 pokemon_list = [
     "pikachu",
     "charizard",
