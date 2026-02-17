@@ -1,63 +1,37 @@
-## Asyncio tutorial for making requests
+# Async Pokémon Fetcher
+A high-performance Python utility for fetching Pokémon data from the PokeAPI. This project demonstrates professional asynchronous patterns, including rate-limiting with Semaphores and robust error handling.
 
-Async programming is best when we need to wait for tasks to finish. The importance is to understand that coroutines are not executed until they are awaited.
+## Features
+Concurrency: Fetches multiple Pokémon simultaneously using asyncio and aiohttp.
 
-```
-async def fetch_data(delay):
-    print("Fetching data...")
-    await asyncio.sleep(delay) ## simulate I/O operation
-    print("data fetched")
-    return {"data", "Some data"} # return some data
+Rate Limiting: Uses an asyncio.Semaphore to prevent overwhelming the API and getting rate-limited.
 
-# coroutine function
-async def main():
-    print('start of main coroutine')
-    task = fetch_data(2) # not yet gets executed, returns coroutine very important
-```
+Robust Error Handling: Utilizes raise_for_status() to gracefully handle HTTP errors (404, 500, etc.) without crashing.
 
-There is no improvement in this function because the data runs syncrounsly since each task is awaited individually
+Non-Blocking: Leverages the async/await syntax for maximum I/O efficiency.
 
-```
-async def main():
-    task1 = fetch_data(2,1)
-    task2 = fetch_data(2,2)
+### Installation
+Clone the repository:
 
-    result1 = await task1 # start executing task1
-    print(f"Received result: {result1}")
+Bash
+git clone https://github.com/yourusername/pokemon-async-fetcher.git
+cd pokemon-async-fetcher
+**Install dependencies**:
+python3 -m venv venv
+source venv/bin/activate
 
-    result2 = await task2 # start executing task2
-    print(f"Received result: {result2}")
-```
+pip install -r requirements.txt
 
-This creates all the tasks on the event loop at the same time
+## Usage
+Ensure you have a constants.py file with a pokemon_list and run the main script:
 
+Bash
+python main.py
+How it Works
+The script initializes an aiohttp.ClientSession and creates a batch of tasks. The Semaphore acts as a traffic controller:
 
-```
-async def fetch_data(id, sleep_time):
-    print(f"Coroutine {id} starting to fetch data.")
-    await asyncio.sleep(sleep_time)
-    return {"id": id, "data": f'sample data from coroutine {id}'}
+If the Semaphore is set to 5, only 5 requests are active at once.
 
+As one request finishes, the next one in the queue begins.
 
-async def main():
-    start_time = perf_counter()
-
-    task1 = asyncio.create_task(fetch_data(1,2))
-    task2 = asyncio.create_task(fetch_data(2,3))
-    task3 = asyncio.create_task(fetch_data(3,1))
-```
-
-this is shorter notation using ```asyncio.gather``` not the easiest for error handling.
-```
-results = await asyncio.gather(fetch_data(1,2), fetch_data(2,3), fetch_data(3,1))
-```
-
-Using a task group is better for error handling:
-```
-tasks = []
-    # will create and execute each task con-currently
-    async with asyncio.TaskGroup() as tg: # will cancel all tasks if one fails - better error handling
-        for i, sleep_time in enumerate([2,1,3], start=1):
-            task = tg.create_task(fetch_data(i, sleep_time))
-            tasks.append(task)
-```
+The asyncio.gather(return_exceptions=True) call ensures that if one request fails (e.g., a 404), the rest of the batch continues uninterrupted.
