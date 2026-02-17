@@ -6,37 +6,23 @@ from constants import pokemon_list
 from fetch_pokemon import print_json
 from time import perf_counter
 
+
 def format_endpoint_url(pokemon_name: str) -> str:
     return f'https://pokeapi.co/api/v2/pokemon/{pokemon_name}'
 
-async def fetch_pokemon_data(semaphore, session, endpoint) -> dict[str, Any] | None:
+async def fetch_pokemon_data(semaphore, session, endpoint) -> dict[str, Any]:
+    
+    timeout = aiohttp.ClientTimeout(total=10)
     async with semaphore:
-        try:
-            async with session.get(endpoint) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    # print(f'fetched: {data['name']}')
-                    return data
-                elif resp.status == 404:
-                    # raise Exception(f'pokemon not found: {endpoint}')
-                    print(f'pokemon not found: {endpoint}')
-                else:
-                    # raise Exception(f'failed to get request: {endpoint}')
-                    print(f'failed to get request: {endpoint}')
-                
-        except aiohttp.ClientError as e:
-            # raise Exception(f'client error {e}')
-            print(f'client error {e}')
-        
-        return None
+        async with session.get(endpoint, timeout=timeout) as resp:
+            resp.raise_for_status() # this will be returned
+            
+            return await resp.json()
 
+async def fetch_multiple_pokemon(session: aiohttp.ClientSession, pokemon_list: list) -> list[dict[str, Any]]:
+    semaphore = asyncio.Semaphore(5) # limit to 5 concurrent requests at any given time
 
-async def fetch_multiple_pokemon(session, pokemon_list: list) -> list[dict[str, Any]]:
-    semaphore = asyncio.Semaphore(20) # limit to 5 concurrent requests
-
-    tasks = [asyncio.create_task(
-                fetch_pokemon_data(semaphore, session, format_endpoint_url(pokemon))
-            ) for pokemon in pokemon_list]
+    tasks = [fetch_pokemon_data(semaphore, session, format_endpoint_url(pokemon)) for pokemon in pokemon_list]
     
     start = perf_counter()
     result: list = await asyncio.gather(*tasks, return_exceptions=True)
@@ -44,14 +30,15 @@ async def fetch_multiple_pokemon(session, pokemon_list: list) -> list[dict[str, 
 
     parsed_data = []
     print('--------')
+    
     for response_data in result:
         if isinstance(response_data, Exception) or response_data is None:
             continue
 
-        response_data = {'name': response_data['name'],
-                         'height': response_data['height'],
-                         'weight': response_data['weight'],
-                         'base_experience': response_data['base_experience']
+        response_data = {'name': response_data.get('name'),
+                         'height': response_data.get('height'),
+                         'weight': response_data.get('weight'),
+                         'base_experience': response_data.get('base_experience')
                         }
         parsed_data.append(response_data)
     
@@ -61,7 +48,9 @@ async def fetch_multiple_pokemon(session, pokemon_list: list) -> list[dict[str, 
 async def main():
     
     async with aiohttp.ClientSession() as session:
-        await fetch_multiple_pokemon(session, pokemon_list)
+        data = await fetch_multiple_pokemon(session, pokemon_list)
+        
+        print(data)
 
 
 if __name__ == "__main__":
